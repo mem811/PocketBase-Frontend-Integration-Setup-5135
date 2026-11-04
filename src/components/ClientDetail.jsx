@@ -132,7 +132,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       start_date:dateValue(packageForm.start_date),
       expiry_date:dateValue(packageForm.expiry_date),
       due_date:dateValue(packageForm.due_date),
-      status:packageForm.status||'active'
+      status:'active'
     };
     try{
       if(packageForm.id) await pb.collection('packages').update(packageForm.id,values);
