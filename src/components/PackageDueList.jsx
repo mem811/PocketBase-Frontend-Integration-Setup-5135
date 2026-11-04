@@ -3,7 +3,7 @@ import {packageBilling,isUrgentPackage} from '../lib/packageBilling';
 
 export default function PackageDueList({packages,clients,payments,onRecord}) {
   const urgent=packages
-    .filter((item)=>isUrgentPackage(item,payments))
+    .filter((item)=>item.status==='active'&&isUrgentPackage(item,payments))
     .map((item)=>({
       packageRecord:item,
       client:clients.find((client)=>client.id===item.client),

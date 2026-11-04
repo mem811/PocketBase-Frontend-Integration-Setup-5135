@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {pb,money,formatDate} from '../lib/pocketbase';
 import {pocketBaseErrorMessage} from '../lib/pocketbaseErrors';
+import {packageBilling} from '../lib/packageBilling';
 import PaymentEditor from './PaymentEditor';
 import PackageDueList from './PackageDueList';
 import './TrainerPayments.css';
@@ -16,7 +17,10 @@ export default function TrainerPayments(){
   const [methodFilter,setMethodFilter]=useState('all');
   const [editing,setEditing]=useState(null);
   const [initialClientId,setInitialClientId]=useState('');
+  const [initialPackageId,setInitialPackageId]=useState('');
+  const [editorOpen,setEditorOpen]=useState(false);
   const [error,setError]=useState('');
+  const [toast,setToast]=useState('');
 
   async function load(){
     const [payments,clients,packages]=await Promise.all([
@@ -33,20 +37,24 @@ export default function TrainerPayments(){
   const visiblePayments=periodPayments.filter((item)=>(clientFilter==='all'||item.client===clientFilter)&&(methodFilter==='all'||item.method===methodFilter));
   const methodTotals=Object.fromEntries(methods.map((method)=>[method,periodPayments.filter((item)=>item.method===method).reduce((sum,item)=>sum+Number(item.amount||0),0)]));
   const outstanding=data.clients.map((client)=>{
-    const owed=data.packages.filter((item)=>item.client===client.id).reduce((sum,item)=>sum+Number(item.price||0)-data.payments.filter((payment)=>payment.package===item.id).reduce((paid,payment)=>paid+Number(payment.amount||0),0),0);
+    const owed=data.packages.filter((item)=>item.client===client.id&&item.status==='active').reduce((sum,item)=>sum+packageBilling(item,data.payments).balance,0);
     return {client,owed:Math.max(0,owed)};
   }).filter((item)=>item.owed>0).sort((a,b)=>b.owed-a.owed);
 
-  function startNew(clientId=''){setEditing(null);setInitialClientId(clientId);}
-  function quickRecord(clientId){startNew(clientId||'');}
-  function closeEditor(){setEditing(null);setInitialClientId('');}
+  function startNew(clientId=''){setEditing(null);setInitialClientId(clientId);setInitialPackageId('');setError('');setToast('');setEditorOpen(true);}
+  function quickRecord(clientId,packageId){setEditing(null);setInitialClientId(clientId||'');setInitialPackageId(packageId||'');setError('');setToast('');setEditorOpen(true);}
+  function closeEditor(){setEditing(null);setInitialClientId('');setInitialPackageId('');setEditorOpen(false);}
 
   async function savePayment(values){
     try{
-      if(editing)await pb.collection('payments').update(editing.id,values);
+      const wasEditing=Boolean(editing);
+      if(wasEditing)await pb.collection('payments').update(editing.id,values);
       else await pb.collection('payments').create(values);
       closeEditor();
-      await load();
+      setToast(wasEditing?'Payment updated.':'Payment recorded.');
+      setError('');
+      try{await load();}
+      catch(err){setError(`Payment saved, but totals could not refresh. ${pocketBaseErrorMessage(err,'Could not load payments.')}`);}
     }catch(err){throw new Error(pocketBaseErrorMessage(err,'Could not save payment.'));}
   }
 
@@ -57,9 +65,12 @@ export default function TrainerPayments(){
     catch(err){setError(pocketBaseErrorMessage(err,'Could not delete payment.'));}
   }
 
+  function openPayment(payment){setInitialClientId('');setInitialPackageId('');setEditing(payment);setEditorOpen(true);setError('');setToast('');}
+
   return <>
     <header className="page-heading"><div><p className="eyebrow">MONEY, MADE CLEAR</p><h1>Payments</h1><p className="muted">Track collections and follow up on outstanding balances.</p></div><button className="button button-primary" onClick={()=>startNew()}><span aria-hidden="true">＋</span> Record payment</button></header>
     {error&&<div className="notice notice-error">{error}</div>}
+    {toast&&<div className="notice notice-success" role="status">{toast}</div>}
     <section className="payment-summary">
       <article className="payment-sticker payment-total"><span>Collected · {month}</span><strong>{money(periodPayments.reduce((sum,item)=>sum+Number(item.amount||0),0))}</strong></article>
       {methods.map((method)=><article className="payment-sticker" key={method}><span>{method}</span><strong>{money(methodTotals[method])}</strong></article>)}
@@ -76,8 +87,8 @@ export default function TrainerPayments(){
       <div className="list-stack">{visiblePayments.map((payment)=>{
         const client=data.clients.find((item)=>item.id===payment.client);
         return <div className="payment-row" key={payment.id}>
-          <button className="payment-row-main" onClick={()=>{setInitialClientId('');setEditing(payment);}}><span className="payment-date">{formatDate(payment.date)}</span><strong>{client?.name||payment.expand?.client?.name||'Client'}</strong><span>{payment.method}{payment.note?` · ${payment.note}`:''}</span><b>{money(payment.amount)}</b></button>
-          <div className="payment-row-actions"><button className="text-button" onClick={()=>{setInitialClientId('');setEditing(payment);}}>Edit</button><button className="text-button danger-text" onClick={()=>deletePayment(payment)}>Delete</button></div>
+          <button className="payment-row-main" onClick={()=>openPayment(payment)}><span className="payment-date">{formatDate(payment.date)}</span><strong>{client?.name||payment.expand?.client?.name||'Client'}</strong><span>{payment.method}{payment.note?` · ${payment.note}`:''}</span><b>{money(payment.amount)}</b></button>
+          <div className="payment-row-actions"><button className="text-button" onClick={()=>openPayment(payment)}>Edit</button><button className="text-button danger-text" onClick={()=>deletePayment(payment)}>Delete</button></div>
         </div>;
       })}{!visiblePayments.length&&<div className="empty-state"><p>No payments match these filters.</p></div>}</div>
     </section>
@@ -85,6 +96,6 @@ export default function TrainerPayments(){
       <div className="panel-title"><div><h2>Outstanding</h2><p>Clients with unpaid package balances.</p></div></div>
       <div className="list-stack">{outstanding.map(({client,owed})=><div className="list-row outstanding-row" key={client.id}><div className="row-main"><strong>{client.name}</strong><span>{client.email||'Client balance'}</span></div><b className="outstanding-amount">{money(owed)}</b><button className="button button-secondary button-small" onClick={()=>startNew(client.id)}>Record payment</button></div>)}{!outstanding.length&&<div className="empty-state"><p>Everyone is all caught up.</p></div>}</div>
     </section>
-    {(editing||initialClientId)&&<div className="payment-editor-wrap"><PaymentEditor key={editing?.id||initialClientId||'new'} payment={editing} initialClientId={initialClientId} clients={data.clients} packages={data.packages} payments={data.payments} onCancel={closeEditor} onSave={savePayment}/></div>}
+    {editorOpen&&<div className="payment-editor-wrap"><PaymentEditor key={`${editing?.id||'new'}-${initialClientId}-${initialPackageId}`} payment={editing} initialClientId={initialClientId} initialPackageId={initialPackageId} clients={data.clients} packages={data.packages} payments={data.payments} onCancel={closeEditor} onSave={savePayment}/></div>}
   </>;
 }

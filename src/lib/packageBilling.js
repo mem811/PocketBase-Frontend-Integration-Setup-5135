@@ -8,9 +8,10 @@ export function packageBilling(packageRecord,payments) {
   const balance=Math.max(0,Number(packageRecord.price||0)-paid);
   const dueDate=packageRecord.due_date ? String(packageRecord.due_date).slice(0,10) : '';
   const today=new Date();
-  today.setHours(0,0,0,0);
-  const due=dueDate ? new Date(`${dueDate}T00:00:00`) : null;
-  const daysUntilDue=due ? Math.ceil((due-today)/86400000) : null;
+  const todayKey=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const due=dueDate ? new Date(`${dueDate}T12:00:00`) : null;
+  const todayAtNoon=new Date(`${todayKey}T12:00:00`);
+  const daysUntilDue=due ? Math.round((due-todayAtNoon)/86400000) : null;
   let status='Not due';
   let statusClass='not-due';
 
@@ -43,6 +44,7 @@ export function packageBilling(packageRecord,payments) {
 }
 
 export function isUrgentPackage(packageRecord,payments) {
+  if(packageRecord.status!=='active')return false;
   const billing=packageBilling(packageRecord,payments);
   return billing.balance>0 && ['overdue','due-soon'].includes(billing.statusClass);
 }

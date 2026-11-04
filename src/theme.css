@@ -321,3 +321,440 @@ html body .weekly-time-fields label {
     width: 100%;
   }
 }
+
+html body {
+  --ink: #333333;
+  --muted: #6B5A60;
+  --line: #E8C5D2;
+  --teal: #7D2248;
+  --teal-dark: #641638;
+  --butter: #FFE7B8;
+  --blush: #F9D3E0;
+  --coral: #E0457B;
+  --mint: #D7EFD9;
+  --cream: #FFF9F6;
+  --paper: #FFFFFF;
+  --input: #FFFFFF;
+  --lavender: #F9D3E0;
+  --rose: #E0457B;
+  --soft-grey: #ECE6E8;
+  --dot: transparent;
+  --shadow: 0 6px 20px rgba(125, 34, 72, 0.08);
+  --wine: #7D2248;
+  --magenta: #E0457B;
+  --orange: #FF8200;
+  --gold: #FFAD00;
+  --yellow: #FBE122;
+  --soft-gold: #FFE7B8;
+  --soft-green: #D7EFD9;
+  --soft-pink: #F9D3E0;
+  --soft-border: #E8C5D2;
+  --warm-white: #FFF9F6;
+  --charcoal: #333333;
+  --muted-brand: #6B5A60;
+  --wine-shadow: 0 6px 20px rgba(125, 34, 72, 0.08);
+  color: var(--charcoal);
+  background-color: var(--warm-white);
+  background-image: none;
+  font-family: 'Montserrat', sans-serif;
+}
+
+html {
+  background: #FFF9F6;
+}
+
+html body,
+html body button,
+html body input,
+html body textarea,
+html body select {
+  font-family: 'Montserrat', sans-serif;
+}
+
+html body h1,
+html body .next-session strong,
+html body .client-stat-value,
+html body .client-identity-copy h1 {
+  color: var(--wine);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+html body h2,
+html body h3,
+html body .stat-card strong,
+html body .time-block,
+html body .package-row > b,
+html body .payment-sticker strong,
+html body .upcoming-week-heading h3,
+html body .calendar-month-controls h2,
+html body .calendar-detail-title h3,
+html body .active-package-summary > strong {
+  color: var(--wine);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+html body .brand,
+html body .brand > span:last-child,
+html body .mobile-topbar strong,
+html body .studio-wordmark {
+  color: var(--wine);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+}
+
+html body .brand sup,
+html body .mobile-topbar sup,
+html body .studio-wordmark sup {
+  margin-left: 2px;
+  font-size: .45em;
+  vertical-align: super;
+}
+
+html body .brand small {
+  color: var(--wine);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+html body .brand-mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wine);
+  font-size: 23px;
+  transform: none;
+}
+
+html body .mobile-topbar .brand-mark {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 22px;
+}
+
+html body .studio-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+html body .studio-lockup .brand-mark {
+  width: 36px;
+  height: 36px;
+  font-size: 29px;
+}
+
+html body .eyebrow,
+html body .workspace-label {
+  color: var(--magenta);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+
+html body .page-heading h1,
+html body .login-card h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+html body a,
+html body .back-link {
+  color: var(--magenta);
+}
+
+html body .button,
+html body .nav-item,
+html body .mobile-nav button,
+html body .client-tabs button,
+html body .calendar-view-toggle button,
+html body .text-button {
+  border-radius: 999px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+html body .button {
+  box-shadow: none;
+}
+
+html body .button-secondary,
+html body .button-quiet {
+  border: 1.5px solid var(--wine);
+  background: #FFFFFF;
+  color: var(--wine);
+}
+
+html body .button-primary {
+  border: 1.5px solid var(--wine);
+  background-color: var(--wine);
+  color: #FFFFFF;
+}
+
+html body .button-soft {
+  border: 1.5px solid var(--soft-border);
+  background: var(--soft-pink);
+  color: var(--wine);
+}
+
+html body .nav-item.active,
+html body .mobile-nav button.active,
+html body .client-tabs button.selected,
+html body .calendar-view-toggle button.selected {
+  border: 1.5px solid var(--wine);
+  box-shadow: none;
+  color: #FFFFFF;
+}
+
+html body .panel,
+html body .client-card,
+html body .stat-card,
+html body .login-card,
+html body .payment-editor,
+html body .upcoming-session-card,
+html body .client-payment-package,
+html body .sidebar,
+html body .slot-card,
+html body .day-column,
+html body .schedule-card,
+html body .private-note,
+html body .client-note,
+html body .active-package-summary,
+html body .client-quick-stat,
+html body .payment-sticker,
+html body .client-more-menu,
+html body .calendar-day,
+html body .client-session-week > h3,
+html body .client-session-date-block,
+html body .client-exercise-list > div,
+html body .billing-sticker,
+html body .status,
+html body .client-status-sticker,
+html body .client-session-sticker,
+html body .upcoming-status,
+html body .confirmation-pending,
+html body .client-confirmed-label,
+html body .session-confirmed-badge,
+html body .day-time-row,
+html body .template-editor {
+  border: 1.5px solid var(--soft-border);
+  border-radius: 16px;
+  box-shadow: var(--wine-shadow);
+  transform: none;
+}
+
+html body .panel,
+html body .client-card,
+html body .stat-card,
+html body .login-card,
+html body .payment-editor,
+html body .upcoming-session-card,
+html body .client-payment-package,
+html body .slot-card,
+html body .day-column,
+html body .schedule-card,
+html body .private-note,
+html body .client-note,
+html body .active-package-summary,
+html body .client-quick-stat,
+html body .payment-sticker {
+  background-color: #FFFFFF;
+}
+
+html body .panel-title h2 {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wine);
+  font-family: 'Montserrat', sans-serif;
+  transform: none;
+}
+
+html body .page-heading {
+  padding-bottom: 13px;
+}
+
+html body .page-heading::after {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--wine), var(--magenta), var(--orange), var(--gold));
+  color: transparent;
+  content: '';
+  transform: none;
+}
+
+html body .login-wrap {
+  position: relative;
+  background: linear-gradient(90deg, var(--wine), var(--magenta), var(--orange), var(--gold)) top / 100% 7px no-repeat, var(--warm-white);
+}
+
+html body .login-card {
+  border-color: var(--soft-border);
+  box-shadow: var(--wine-shadow);
+}
+
+html body input:not([type='checkbox']):not([type='radio']),
+html body select,
+html body textarea {
+  border: 1.5px solid var(--soft-border);
+  border-radius: 12px;
+  box-shadow: none;
+  color: var(--charcoal);
+}
+
+html body input:focus,
+html body textarea:focus,
+html body select:focus {
+  border-color: var(--magenta);
+  box-shadow: 0 0 0 3px rgb(224 69 123 / 16%);
+}
+
+html body .stat-card,
+html body .client-quick-stat,
+html body .payment-sticker,
+html body .client-card {
+  transform: none;
+}
+
+html body .status,
+html body .billing-sticker,
+html body .client-status-sticker,
+html body .client-session-sticker,
+html body .upcoming-status {
+  box-shadow: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+html body .status.status-requested,
+html body .status-requested {
+  border-color: var(--soft-border);
+  background: var(--soft-gold);
+  color: var(--charcoal);
+}
+
+html body .status.status-confirmed,
+html body .status-confirmed,
+html body .client-confirmed-label,
+html body .session-confirmed-badge,
+html body .upcoming-status.confirmed {
+  background: var(--soft-green);
+  color: var(--charcoal);
+}
+
+html body .status.status-completed,
+html body .status-completed {
+  background: var(--soft-pink);
+  color: var(--charcoal);
+}
+
+html body .status.status-cancelled,
+html body .status-cancelled,
+html body .status.status-noshow,
+html body .status-noshow {
+  background: #ECE6E8;
+  color: var(--charcoal);
+}
+
+html body .confirmation-pending,
+html body .upcoming-status.waiting {
+  border-color: var(--wine);
+  background: #FFFFFF;
+  color: var(--wine);
+}
+
+html body .billing-overdue {
+  border-color: var(--magenta);
+  background: var(--magenta);
+  color: #FFFFFF;
+}
+
+html body .progress-track span,
+html body .client-stat-progress span {
+  background: linear-gradient(90deg, var(--wine), var(--magenta), var(--orange), var(--gold));
+}
+
+html body .chart-line {
+  stroke: var(--wine);
+}
+
+html body .chart-dot {
+  fill: var(--gold);
+  stroke: var(--wine);
+}
+
+html body .chart-axis {
+  stroke: var(--soft-border);
+}
+
+html body .chart-value {
+  fill: var(--charcoal);
+  font-family: 'Montserrat', sans-serif;
+}
+
+html body .chart-date {
+  fill: var(--muted-brand);
+  font-family: 'Montserrat', sans-serif;
+}
+
+html body .calendar-day:hover,
+html body .calendar-day.is-selected {
+  border-color: var(--wine);
+  background: var(--soft-gold);
+  box-shadow: none;
+}
+
+html body .text-button:hover {
+  border-color: var(--soft-border);
+  background: var(--soft-pink);
+  color: var(--wine);
+}
+
+html body .notice,
+html body .notice-error,
+html body .notice-success {
+  border: 1.5px solid var(--soft-border);
+  border-radius: 14px;
+  box-shadow: var(--wine-shadow);
+}
+
+html body .mobile-nav {
+  border-top: 1.5px solid var(--soft-border);
+  background: #FFFFFF;
+}
+
+html body .mobile-topbar {
+  border-bottom: 1.5px solid var(--soft-border);
+}
+
+html body .sidebar {
+  border-right: 1.5px solid var(--soft-border);
+}

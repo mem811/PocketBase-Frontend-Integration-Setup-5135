@@ -53,13 +53,16 @@ export default function LoginScreen() {
   return (
     <main className="login-wrap">
       <section className="login-card">
-        <div className="brand-mark"><SafeIcon icon={FiIcons.FiActivity} /></div>
-        <p className="eyebrow">YOUR TRAINING STUDIO</p>
+        <div className="studio-lockup">
+          <span className="brand-mark" aria-hidden="true">🦋</span>
+          <span className="studio-wordmark">Studio U<sup>®</sup></span>
+        </div>
+        <p className="eyebrow">YOUR STUDIO</p>
         <h1>{resetMode ? 'Reset your password.' : 'Welcome back.'}</h1>
         <p className="muted">
           {resetMode
             ? 'We’ll send a reset link if there’s an account for that email.'
-            : 'Your sessions, progress, and plans—all in one place.'}
+            : 'A studio all about U.'}
         </p>
         {resetMode ? (
           <>
