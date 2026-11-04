@@ -383,7 +383,6 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       </article>
       <article className="panel" style={{display:tab==='sessions'?'':'none'}}>
         <PanelTitle title="Sessions"/>
-        <div className="list-stack">{data.sessions.length?data.sessions.map((session)=><div className="list-row" key={session.id}><div className="row-main"><strong>{session.expand?.slot?.date?formatDate(session.expand.slot.date):'Session'}</strong><span>{formatTime(session.expand?.slot?.start)} · {session.trainer_notes||'No workout notes'}</span></div><SessionConfirmedBadge confirmed={session.client_confirmed}/><Status status={session.status}/></div>):<Empty text="No sessions recorded yet."/>}</div>
         {upcomingGroups.map((group)=><div key={group.label}><h3 className="subheading">{group.label}</h3><SessionRows sessions={group.sessions}/></div>)}
         {pastGroups.length>0&&<><h3 className="subheading">Past sessions</h3>{pastGroups.map((group)=><div key={group.label}><h3 className="subheading">{group.label}</h3><SessionRows sessions={group.sessions}/></div>)}</>}
       </article>
