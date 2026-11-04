@@ -10,6 +10,7 @@ import WeeklyScheduleManager from './WeeklyScheduleManager';
 import ClientProfileEditor from './ClientProfileEditor';
 import PackageBillingSummary from './PackageBillingSummary';
 import ExerciseProgressChart from './ExerciseProgressChart';
+import PaymentEditor from './PaymentEditor';
 
 const today=()=>localDateKey(new Date());
 function dateValue(value){return value?new Date(`${value}T12:00:00.000Z`).toISOString():'';}
@@ -43,9 +44,16 @@ export default function ClientDetail({client,onBack,onRemoved}) {
   const [inviteMessage,setInviteMessage]=useState('');
   const [clientMenuOpen,setClientMenuOpen]=useState(false);
   const [showDeleteDialog,setShowDeleteDialog]=useState(false);
+  const [showArchiveDialog,setShowArchiveDialog]=useState(false);
   const [deleteName,setDeleteName]=useState('');
   const [lifecycleBusy,setLifecycleBusy]=useState(false);
   const [tab,setTab]=useState(()=>storedClientTab(client.id));
+  const [paymentOpen,setPaymentOpen]=useState(false);
+  const [scheduleOpen,setScheduleOpen]=useState(false);
+  const [scheduleSlots,setScheduleSlots]=useState([]);
+  const [selectedSlot,setSelectedSlot]=useState('');
+  const [scheduleBusy,setScheduleBusy]=useState(false);
+  const [noteToDelete,setNoteToDelete]=useState(null);
   const clientMenuRef=useRef(null);
 
   async function load(){
@@ -169,13 +177,16 @@ export default function ClientDetail({client,onBack,onRemoved}) {
     }catch(err){setError(pocketBaseErrorMessage(err,'Could not update the note.'));}
   }
 
-  async function deleteNote(note){
-    if(!window.confirm('Delete this note? This cannot be undone.'))return;
+  function deleteNote(note){setNoteToDelete(note);}
+
+  async function confirmDeleteNote(){
+    if(!noteToDelete)return;
     setError('');
     try{
-      await pb.collection('trainer_private_notes').delete(note.id);
-      if(editingNote===note.id)setEditingNote(null);
+      await pb.collection('trainer_private_notes').delete(noteToDelete.id);
+      if(editingNote===noteToDelete.id)setEditingNote(null);
       setOpenNoteMenu('');
+      setNoteToDelete(null);
       await load();
     }catch(err){setError(pocketBaseErrorMessage(err,'Could not delete the note.'));}
   }
@@ -190,26 +201,40 @@ export default function ClientDetail({client,onBack,onRemoved}) {
     }catch(err){setError(pocketBaseErrorMessage(err,err?.message||'Could not resend the login link.'));}
   }
 
-  async function recordPayment(){
-    if(!data.packages.length)return window.alert('Add a package before recording a payment.');
-    const amount=Number(window.prompt('Payment amount'));
-    if(!amount||amount<0)return;
-    try{
-      await pb.collection('payments').create({client:client.id,package:data.packages[0].id,amount,date:new Date(`${today()}T12:00:00.000Z`).toISOString(),method:'cash',note:''});
-      await load();
-    }catch(err){setError(pocketBaseErrorMessage(err,'Could not record the payment.'));}
+  function recordPayment(){
+    if(!data.packages.length){
+      setError('Add a package before recording a payment.');
+      return;
+    }
+    setError('');
+    setPaymentOpen(true);
   }
 
-  async function scheduleSession(){
+  async function savePayment(payment){
+    await pb.collection('payments').create(payment);
+    await load();
+    setPaymentOpen(false);
+  }
+
+  async function openScheduleSession(){
     setError('');
+    setSelectedSlot('');
+    setScheduleOpen(true);
     try{
       const slots=await pb.collection('availability').getFullList({filter:'status="open"',sort:'date,start'});
       const upcoming=slots.filter((slot)=>String(slot.date||'').slice(0,10)>=today());
-      if(!upcoming.length)return setError('No open availability slots are available.');
-      const choice=window.prompt(`Choose an open slot by number:\n${upcoming.map((slot,index)=>`${index+1}. ${formatDate(slot.date)} · ${formatTime(slot.start)}–${formatTime(slot.end)}`).join('\n')}`,'1');
-      if(choice===null)return;
-      const slot=upcoming[Number(choice)-1];
-      if(!slot)return setError('Choose a valid slot number.');
+      setScheduleSlots(upcoming);
+      if(!upcoming.length)setError('No open availability slots are available.');
+    }catch(err){setError(pocketBaseErrorMessage(err,err?.message||'Unable to load open availability slots.'));}
+  }
+
+  async function scheduleSession(event){
+    event.preventDefault();
+    const slot=scheduleSlots.find((item)=>item.id===selectedSlot);
+    if(!slot)return setError('Choose a valid slot.');
+    setScheduleBusy(true);
+    setError('');
+    try{
       await pb.collection('availability').update(slot.id,{status:'booked'});
       try{
         await pb.collection('sessions').create({client:client.id,slot:slot.id,status:'confirmed',client_confirmed:false,client_notes:''});
@@ -217,12 +242,13 @@ export default function ClientDetail({client,onBack,onRemoved}) {
         await pb.collection('availability').update(slot.id,{status:'open'}).catch(()=>{});
         throw err;
       }
+      setScheduleOpen(false);
       await load();
     }catch(err){setError(pocketBaseErrorMessage(err,err?.message||'Could not schedule this session.'));}
+    finally{setScheduleBusy(false);}
   }
 
   async function archiveThisClient(){
-    if(!window.confirm(`Archive ${profile.name}? Future unfinished sessions will be removed and weekly times paused.`))return;
     setLifecycleBusy(true);
     setError('');
     try{
@@ -305,14 +331,14 @@ export default function ClientDetail({client,onBack,onRemoved}) {
     <div className="heading-actions" style={{position:'relative',zIndex:1001,justifyContent:'flex-start',flexWrap:'wrap',overflow:'visible',padding:'3px 4px 9px'}}>
       <button className="button button-secondary" onClick={()=>openPackageForm()}><SafeIcon icon={FiIcons.FiPlus}/> Add package</button>
       <button className="button button-primary" onClick={recordPayment}><SafeIcon icon={FiIcons.FiDollarSign}/> Record payment</button>
-      <button className="button button-soft" onClick={scheduleSession}><SafeIcon icon={FiIcons.FiCalendar}/> Schedule session</button>
+      <button className="button button-soft" onClick={openScheduleSession}><SafeIcon icon={FiIcons.FiCalendar}/> Schedule session</button>
       <div ref={clientMenuRef} style={{position:'relative',display:'flex',alignItems:'center',gap:5,flex:'0 0 auto'}}>
         <button className="button button-quiet" type="button" aria-expanded={clientMenuOpen} onClick={()=>setClientMenuOpen((value)=>!value)} disabled={lifecycleBusy}><SafeIcon icon={FiIcons.FiMoreHorizontal}/> More</button>
         {clientMenuOpen&&<div className="row-actions" style={{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:1000,display:'grid',minWidth:190,padding:8,border:'2px solid var(--ink)',borderRadius:14,background:'var(--paper)',boxShadow:'3px 3px 0 var(--ink)'}}>
           <button className="text-button" type="button" onClick={()=>{setEditing(true);changeTab('overview');setClientMenuOpen(false);}}>Edit profile</button>
           <button className="text-button" type="button" onClick={()=>{resendLogin();setClientMenuOpen(false);}} disabled={!profile.email}>Resend login</button>
-          <button className="text-button" type="button" onClick={archiveThisClient} disabled={lifecycleBusy}>Archive client</button>
-          <button className="text-button danger-text" type="button" onClick={()=>{setClientMenuOpen(false);setShowDeleteDialog(true);setDeleteName('');}}>Delete permanently</button>
+          <button className="text-button" type="button" onClick={()=>{setClientMenuOpen(false);setError('');setShowArchiveDialog(true);}} disabled={lifecycleBusy}>Archive client</button>
+          <button className="text-button danger-text" type="button" onClick={()=>{setClientMenuOpen(false);setShowDeleteDialog(true);setDeleteName('');setError('');}}>Delete permanently</button>
         </div>}
       </div>
     </div>
@@ -321,16 +347,52 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       {['overview','sessions','payments','workouts','notes'].map((item)=><button key={item} role="tab" aria-selected={tab===item} className={`button button-small ${tab===item?'button-primary':'button-quiet'}`} onClick={()=>changeTab(item)} style={{flex:'0 0 auto',textTransform:'capitalize'}}>{item}</button>)}
     </div>
 
-    {showDeleteDialog&&<section className="panel form-panel" role="dialog" aria-modal="true" aria-labelledby="delete-client-title">
-      <div className="panel-title"><div><h2 id="delete-client-title">Delete {profile.name} permanently?</h2><p>This erases their sessions, packages, payments, workouts, notes, weekly times, and login. This cannot be undone.</p></div></div>
+    {showArchiveDialog&&<StudioModal title={`Archive ${profile.name}?`} onClose={()=>setShowArchiveDialog(false)} closeDisabled={lifecycleBusy}>
+      <p>Future unfinished sessions will be removed and weekly times paused.</p>
+      {error&&<p className="error-text">{error}</p>}
+      <div className="form-actions"><button type="button" className="button button-quiet" onClick={()=>setShowArchiveDialog(false)} disabled={lifecycleBusy}>Cancel</button><button type="button" className="button button-primary" onClick={archiveThisClient} disabled={lifecycleBusy}>{lifecycleBusy?'Archiving…':'Archive client'}</button></div>
+    </StudioModal>}
+
+    {showDeleteDialog&&<StudioModal title={`Delete ${profile.name} permanently?`} onClose={()=>setShowDeleteDialog(false)} closeDisabled={lifecycleBusy}>
+      <p>This erases their sessions, packages, payments, workouts, notes, weekly times, and login. This cannot be undone.</p>
       <form className="form-grid" onSubmit={deleteThisClient}>
         <label className="form-span">Type <strong>{firstName}</strong> to confirm<input autoComplete="off" value={deleteName} onChange={(event)=>setDeleteName(event.target.value)} required /></label>
         {error&&<p className="error-text form-span">{error}</p>}
         <div className="form-actions form-span"><button type="button" className="button button-quiet" onClick={()=>setShowDeleteDialog(false)} disabled={lifecycleBusy}>Cancel</button><button className="button button-primary" disabled={lifecycleBusy||deleteName.trim()!==firstName}>{lifecycleBusy?'Deleting…':'Delete permanently'}</button></div>
       </form>
-    </section>}
+    </StudioModal>}
+
+    {noteToDelete&&<StudioModal title="Delete this note?" onClose={()=>setNoteToDelete(null)}>
+      <p>This cannot be undone.</p>
+      <div className="form-actions"><button type="button" className="button button-quiet" onClick={()=>setNoteToDelete(null)}>Cancel</button><button type="button" className="button button-primary" onClick={confirmDeleteNote}>Delete note</button></div>
+    </StudioModal>}
+
+    {scheduleOpen&&<StudioModal title="Schedule a session" onClose={()=>setScheduleOpen(false)} closeDisabled={scheduleBusy}>
+      {error&&<p className="error-text">{error}</p>}
+      {!error&&!scheduleSlots.length&&<p>Loading available times…</p>}
+      {scheduleSlots.length>0&&<form className="form-grid" onSubmit={scheduleSession}>
+        <label className="form-span">Open time<select required value={selectedSlot} onChange={(event)=>setSelectedSlot(event.target.value)}>
+          <option value="">Choose an open time</option>
+          {scheduleSlots.map((slot)=><option key={slot.id} value={slot.id}>{formatDate(slot.date)} · {formatTime(slot.start)}–{formatTime(slot.end)}</option>)}
+        </select></label>
+        {error&&<p className="error-text form-span">{error}</p>}
+        <div className="form-actions form-span"><button type="button" className="button button-quiet" onClick={()=>setScheduleOpen(false)} disabled={scheduleBusy}>Cancel</button><button className="button button-primary" disabled={scheduleBusy||!selectedSlot}>{scheduleBusy?'Scheduling…':'Schedule session'}</button></div>
+      </form>}
+      {error==='No open availability slots are available.'&&<div className="form-actions"><button type="button" className="button button-quiet" onClick={()=>setScheduleOpen(false)}>Close</button></div>}
+    </StudioModal>}
+
+    {paymentOpen&&<PaymentEditor
+      initialClientId={client.id}
+      initialPackageId={activePackage?.id}
+      clients={[profile]}
+      packages={data.packages}
+      payments={data.payments}
+      onCancel={()=>setPaymentOpen(false)}
+      onSave={savePayment}
+    />}
+
     {inviteMessage&&<div className="notice notice-success">{inviteMessage}</div>}
-    {error&&!showDeleteDialog&&<div className="notice notice-error">{error}</div>}
+    {error&&!showDeleteDialog&&!showArchiveDialog&&!scheduleOpen&&<div className="notice notice-error">{error}</div>}
     {packageForm&&<section className="panel form-panel">
       <div className="panel-title"><div><h2>{packageForm.id?'Edit package':'Add package'}</h2><p>Choose a standard plan or customize every field for this client.</p></div></div>
       <form className="form-grid" onSubmit={savePackage}>
@@ -438,3 +500,12 @@ function SessionRows({sessions}){
 }
 function PanelTitle({title}){return <div className="panel-title"><div><h2>{title}</h2></div></div>;}
 function Empty({text}){return <div className="empty-state"><p>{text}</p></div>;}
+
+function StudioModal({title,children,onClose,closeDisabled=false}){
+  return <div role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!closeDisabled)onClose();}} style={{position:'fixed',inset:0,zIndex:2000,display:'grid',placeItems:'center',padding:16,background:'rgba(35,24,29,.52)'}}>
+    <section className="panel form-panel" role="dialog" aria-modal="true" aria-label={title} style={{width:'min(100%,560px)',maxHeight:'90vh',overflowY:'auto'}}>
+      <div className="panel-title"><div><h2>{title}</h2></div><button type="button" className="icon-button" onClick={onClose} disabled={closeDisabled} aria-label="Close">×</button></div>
+      {children}
+    </section>
+  </div>;
+}
