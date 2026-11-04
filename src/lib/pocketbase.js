@@ -12,8 +12,21 @@ export function clearSession() {
   pb.authStore.clear();
 }
 
+export function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function pocketBaseDate(value) {
+  if (!value) return '';
+  const dateKey = String(value).slice(0, 10);
+  return new Date(`${dateKey}T12:00:00`).toISOString();
+}
+
 export function dateOnly(date = new Date()) {
-  return date.toISOString().slice(0, 10);
+  return localDateKey(date);
 }
 
 export function money(value = 0) {
@@ -25,7 +38,11 @@ export function money(value = 0) {
 
 export function formatDate(value) {
   if (!value) return '—';
-  return new Date(value).toLocaleDateString('en-US', {
+  const dateKey = String(value).slice(0, 10);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateKey)
+    ? new Date(`${dateKey}T12:00:00`)
+    : new Date(value);
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
@@ -42,7 +59,7 @@ export function formatTime(value) {
 }
 
 export function dayKey(value) {
-  return value ? new Date(value).toISOString().slice(0, 10) : '';
+  return value ? String(value).slice(0, 10) : '';
 }
 
 export function isUpcoming(record) {

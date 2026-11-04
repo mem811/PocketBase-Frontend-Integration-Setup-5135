@@ -17,7 +17,7 @@ function addMinutes(value,minutes=45) {
 }
 
 function pocketBaseDate(value) {
-  return new Date(`${value}T00:00:00.000Z`).toISOString();
+  return new Date(`${value}T12:00:00.000Z`).toISOString();
 }
 
 function normalizeTime(value) {
@@ -27,7 +27,17 @@ function normalizeTime(value) {
 }
 
 function isDate(value) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`));
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T12:00:00.000Z`));
+}
+
+async function sessionCount(scheduleId) {
+  const rows=await pb.collection('sessions').getFullList({filter:`schedule="${scheduleId}"`});
+  return rows.length;
+}
+
+function showAddedToast(setToast,count) {
+  setToast(count>0?`${count} session${count===1?'':'s'} added`:'Weekly sessions updated');
+  window.dispatchEvent(new Event('weekly-schedules-updated'));
 }
 
 export default function WeeklyScheduleManager({client}) {
@@ -37,6 +47,7 @@ export default function WeeklyScheduleManager({client}) {
   const [dayTimes,setDayTimes]=useState(initialTimes);
   const [differentTimes,setDifferentTimes]=useState(false);
   const [error,setError]=useState('');
+  const [toast,setToast]=useState('');
 
   async function load() {
     const rows=await pb.collection('recurring_schedules').getFullList({filter:`client="${client.id}"`});
@@ -58,8 +69,10 @@ export default function WeeklyScheduleManager({client}) {
   async function addSchedules(event) {
     event.preventDefault();
     setError('');
+    setToast('');
     if (!days.length) return setError('Choose at least one weekday.');
     try {
+      let added=0;
       for (const weekday of weekdays.filter((day)=>days.includes(day))) {
         const times=differentTimes ? dayTimes[weekday] : {start:shared.start,end:shared.end};
         const start=normalizeTime(times.start);
@@ -77,9 +90,11 @@ export default function WeeklyScheduleManager({client}) {
           active:true
         });
         await fillSchedule(schedule);
+        added+=await sessionCount(schedule.id);
       }
       setDays([]);
       await load();
+      showAddedToast(setToast,added);
     } catch (err) {
       setError(pocketBaseErrorMessage(err,'Could not save all weekly times.'));
       await load().catch(()=>{});
@@ -104,9 +119,13 @@ export default function WeeklyScheduleManager({client}) {
     }
     if (!window.confirm(`Update unmodified future sessions starting ${effectiveDate}? Extra obsolete sessions will be removed.`)) return;
     setError('');
+    setToast('');
     try {
+      const before=await sessionCount(schedule.id);
       await changeSchedule(schedule,{weekday:normalizedDay,start:normalizedStart,end:normalizedEnd},effectiveDate);
       await load();
+      const after=await sessionCount(schedule.id);
+      showAddedToast(setToast,Math.max(0,after-before));
     } catch (err) {
       setError(pocketBaseErrorMessage(err,'Could not update the schedule and its future sessions.'));
     }
@@ -114,14 +133,19 @@ export default function WeeklyScheduleManager({client}) {
 
   async function toggleSchedule(schedule) {
     setError('');
+    setToast('');
     try {
       if (schedule.active) {
         if (!window.confirm('Pause this weekly time and remove its unmodified future sessions?')) return;
         await removeFutureScheduleSessions(schedule.id,localDateKey());
         await pb.collection('recurring_schedules').update(schedule.id,{active:false});
+        window.dispatchEvent(new Event('weekly-schedules-updated'));
       } else {
+        const before=await sessionCount(schedule.id);
         const updated=await pb.collection('recurring_schedules').update(schedule.id,{active:true});
         await fillSchedule(updated);
+        const after=await sessionCount(schedule.id);
+        showAddedToast(setToast,Math.max(0,after-before));
       }
       await load();
     } catch (err) {
@@ -132,12 +156,14 @@ export default function WeeklyScheduleManager({client}) {
   async function removeSchedule(schedule) {
     if (!window.confirm('Remove this weekly time and delete its unmodified future sessions?')) return;
     setError('');
+    setToast('');
     try {
       await removeFutureScheduleSessions(schedule.id,localDateKey());
       const remaining=await pb.collection('sessions').getFullList({filter:`schedule="${schedule.id}"`});
       await Promise.all(remaining.map((session)=>pb.collection('sessions').update(session.id,{schedule:''})));
       await pb.collection('recurring_schedules').delete(schedule.id);
       await load();
+      window.dispatchEvent(new Event('weekly-schedules-updated'));
     } catch (err) {
       setError(pocketBaseErrorMessage(err,'Could not remove this weekly time.'));
     }
@@ -148,6 +174,7 @@ export default function WeeklyScheduleManager({client}) {
       <div><h2>Weekly schedule</h2><p>Standing times create confirmed sessions four weeks ahead.</p></div>
     </div>
     {error && <div className="notice notice-error">{error}</div>}
+    {toast && <div className="notice notice-success" role="status">{toast}</div>}
     <div className="list-stack">
       {schedules.map((schedule)=><div className="list-row" key={schedule.id}>
         <div className="row-main">
@@ -173,7 +200,7 @@ export default function WeeklyScheduleManager({client}) {
         <input type="checkbox" checked={differentTimes} onChange={(event)=>setDifferentTimes(event.target.checked)} />
         Different times per day
       </label>
-      {!differentTimes ? <div className="form-grid section-gap">
+      {!differentTimes ? <div className="form-grid section-gap weekly-time-fields">
         <label>Start<input type="time" required value={shared.start} onChange={(event)=>setShared({...shared,start:event.target.value,end:addMinutes(event.target.value)})} /></label>
         <label>End<input type="time" required value={shared.end} onChange={(event)=>setShared({...shared,end:event.target.value})} /></label>
       </div> : <div className="day-time-list section-gap">
@@ -183,9 +210,9 @@ export default function WeeklyScheduleManager({client}) {
           <label>End<input type="time" required value={dayTimes[day].end} onChange={(event)=>updateDayTime(day,'end',event.target.value)} /></label>
         </div>)}
       </div>}
-      <div className="form-grid section-gap">
+      <div className="form-grid section-gap weekly-date-fields">
         <label>Start date<input type="date" required value={shared.start_date} onChange={(event)=>setShared({...shared,start_date:event.target.value})} /></label>
-        <label>End date <span className="muted">(optional)</span><input type="date" value={shared.end_date} onChange={(event)=>setShared({...shared,end_date:event.target.value})} /></label>
+        <label>End date (optional)<input type="date" value={shared.end_date} onChange={(event)=>setShared({...shared,end_date:event.target.value})} /></label>
       </div>
       <button className="button button-primary section-gap"><SafeIcon icon={FiIcons.FiPlus} /> Add weekly times</button>
     </form>

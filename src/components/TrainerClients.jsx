@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import {pb,money} from '../lib/pocketbase';
+import {pb,money,pocketBaseDate,localDateKey} from '../lib/pocketbase';
 import {pocketBaseErrorMessage} from '../lib/pocketbaseErrors';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -107,19 +107,19 @@ function CreateClient({onCancel,onCreated}) {
   async function addDefaultPackage() {
     const template=templates.find((item)=>item.is_default && item.active);
     if (!template || !createdClient) return;
-    const start=new Date().toISOString().slice(0,10);
+    const start=localDateKey();
     let expiry='';
     if (template.expiry_weeks) {
       const date=new Date(`${start}T12:00:00`);
       date.setDate(date.getDate()+Number(template.expiry_weeks)*7);
-      expiry=date.toISOString().slice(0,10);
+      expiry=localDateKey(date);
     }
     setBusy(true);setError('');
     try {
       await pb.collection('packages').create({
         client:createdClient.id,name:template.name,total_sessions:Number(template.total_sessions),price:Number(template.price),
-        start_date:new Date(`${start}T00:00:00.000Z`).toISOString(),
-        expiry_date:expiry ? new Date(`${expiry}T00:00:00.000Z`).toISOString() : '',
+        start_date:pocketBaseDate(start),
+        expiry_date:expiry ? pocketBaseDate(expiry) : '',
         status:'active'
       });
       onCreated();

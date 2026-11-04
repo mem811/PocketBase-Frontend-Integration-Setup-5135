@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {pb,money,formatDate,formatTime} from '../lib/pocketbase';
 import {pocketBaseErrorMessage} from '../lib/pocketbaseErrors';
 import {archiveClient,permanentlyDeleteClient} from '../lib/clientLifecycle';
@@ -11,9 +11,9 @@ import ClientProfileEditor from './ClientProfileEditor';
 import PackageBillingSummary from './PackageBillingSummary';
 import ExerciseProgressChart from './ExerciseProgressChart';
 
-const today=()=>new Date().toISOString().slice(0,10);
-function dateValue(value){return value?new Date(`${value}T00:00:00.000Z`).toISOString():'';}
-function expiryFrom(start,weeks){if(!start||!weeks)return '';const date=new Date(`${start}T12:00:00`);date.setDate(date.getDate()+Number(weeks)*7);return date.toISOString().slice(0,10);}
+const today=()=>localDateKey(new Date());
+function dateValue(value){return value?new Date(`${value}T12:00:00.000Z`).toISOString():'';}
+function expiryFrom(start,weeks){if(!start||!weeks)return '';const date=new Date(`${start}T12:00:00`);date.setDate(date.getDate()+Number(weeks)*7);return localDateKey(date);}
 function packageFromTemplate(template,start=today()){
   return {name:template?.name||'',total_sessions:template?.total_sessions||10,price:template?.price??0,start_date:start,expiry_date:expiryFrom(start,template?.expiry_weeks),due_date:start};
 }
@@ -46,6 +46,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
   const [deleteName,setDeleteName]=useState('');
   const [lifecycleBusy,setLifecycleBusy]=useState(false);
   const [tab,setTab]=useState(()=>storedClientTab(client.id));
+  const clientMenuRef=useRef(null);
 
   async function load(){
     const [packages,sessions,workouts,payments,privateNotes]=await Promise.all([
@@ -73,6 +74,36 @@ export default function ClientDetail({client,onBack,onRemoved}) {
         setError(pocketBaseErrorMessage(err,err?.message||'Unable to load active package templates.'));
       });
   },[client.id]);
+
+  useEffect(()=>{
+    async function refreshWeeklyData(){
+      try{
+        const [schedules]=await Promise.all([
+          pb.collection('recurring_schedules').getFullList({filter:`client="${client.id}"`}),
+          load()
+        ]);
+        setWeeklySchedules(schedules);
+      }catch(err){setError(pocketBaseErrorMessage(err,'Unable to refresh weekly schedules.'));}
+    }
+    window.addEventListener('weekly-schedules-updated',refreshWeeklyData);
+    return ()=>window.removeEventListener('weekly-schedules-updated',refreshWeeklyData);
+  },[client.id]);
+
+  useEffect(()=>{
+    if(!clientMenuOpen)return undefined;
+    function closeOutside(event){
+      if(!clientMenuRef.current?.contains(event.target))setClientMenuOpen(false);
+    }
+    function closeOnEscape(event){
+      if(event.key==='Escape')setClientMenuOpen(false);
+    }
+    document.addEventListener('pointerdown',closeOutside);
+    document.addEventListener('keydown',closeOnEscape);
+    return ()=>{
+      document.removeEventListener('pointerdown',closeOutside);
+      document.removeEventListener('keydown',closeOnEscape);
+    };
+  },[clientMenuOpen]);
 
   function changeTab(next){
     setTab(next);
@@ -155,6 +186,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
     try{
       await pb.collection('users').requestPasswordReset(profile.email);
       setInviteMessage(`Login link sent to ${profile.email}`);
+      setClientMenuOpen(false);
     }catch(err){setError(pocketBaseErrorMessage(err,err?.message||'Could not resend the login link.'));}
   }
 
@@ -163,7 +195,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
     const amount=Number(window.prompt('Payment amount'));
     if(!amount||amount<0)return;
     try{
-      await pb.collection('payments').create({client:client.id,package:data.packages[0].id,amount,date:new Date().toISOString(),method:'cash',note:''});
+      await pb.collection('payments').create({client:client.id,package:data.packages[0].id,amount,date:new Date(`${today()}T12:00:00.000Z`).toISOString(),method:'cash',note:''});
       await load();
     }catch(err){setError(pocketBaseErrorMessage(err,'Could not record the payment.'));}
   }
@@ -235,7 +267,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
   const orderedDays=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
   const dayLabels={monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'};
   const activeSchedules=weeklySchedules.filter((schedule)=>schedule.active).sort((a,b)=>orderedDays.indexOf(a.weekday)-orderedDays.indexOf(b.weekday));
-  const weeklyLabel=activeSchedules.length?`${activeSchedules.map((schedule)=>dayLabels[schedule.weekday]||schedule.weekday).join(' & ')} · ${formatTime(activeSchedules[0].start)}`:'Not set';
+  const weeklyLabel=activeSchedules.length?`${activeSchedules.map((schedule)=>dayLabels[schedule.weekday]||schedule.weekday).join(' and ')} · ${formatTime(activeSchedules[0].start)} to ${formatTime(activeSchedules[0].end)}`:'Not set';
   const nextDate=nextSession?.expand?.slot?.date?new Date(`${String(nextSession.expand.slot.date).slice(0,10)}T12:00:00`):null;
   const nextDateLabel=nextDate?nextDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'None scheduled';
   const upcomingGroups=groupByWeek(upcomingSessions);
@@ -270,15 +302,13 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       <div className="stat-card"><span className="stat-icon"><SafeIcon icon={FiIcons.FiClock}/></span><p>Weekly times</p><strong style={{fontSize:18}}>{weeklyLabel.split(' · ')[0]}</strong><span>{weeklyLabel.includes(' · ')?weeklyLabel.split(' · ')[1]:'Add a weekly schedule'}</span></div>
     </section>
 
-    <div className="heading-actions" style={{justifyContent:'flex-start',flexWrap:'nowrap',overflowX:'auto',padding:'3px 4px 9px'}}>
+    <div className="heading-actions" style={{position:'relative',zIndex:1001,justifyContent:'flex-start',flexWrap:'wrap',overflow:'visible',padding:'3px 4px 9px'}}>
       <button className="button button-secondary" onClick={()=>openPackageForm()}><SafeIcon icon={FiIcons.FiPlus}/> Add package</button>
       <button className="button button-primary" onClick={recordPayment}><SafeIcon icon={FiIcons.FiDollarSign}/> Record payment</button>
       <button className="button button-soft" onClick={scheduleSession}><SafeIcon icon={FiIcons.FiCalendar}/> Schedule session</button>
-      <button className="button button-quiet" onClick={resendLogin} disabled={!profile.email}><SafeIcon icon={FiIcons.FiMail}/> Resend login</button>
-      <div style={{position:'relative',display:'flex',alignItems:'center',gap:5,flex:'0 0 auto'}}>
-        <button className="text-button" type="button" aria-label="Client actions" aria-expanded={clientMenuOpen} onClick={()=>setClientMenuOpen((value)=>!value)} disabled={lifecycleBusy}>⋯</button>
+      <div ref={clientMenuRef} style={{position:'relative',display:'flex',alignItems:'center',gap:5,flex:'0 0 auto'}}>
         <button className="button button-quiet" type="button" aria-expanded={clientMenuOpen} onClick={()=>setClientMenuOpen((value)=>!value)} disabled={lifecycleBusy}><SafeIcon icon={FiIcons.FiMoreHorizontal}/> More</button>
-        {clientMenuOpen&&<div className="row-actions" style={{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:10,display:'grid',minWidth:190,padding:8,border:'2px solid var(--ink)',borderRadius:14,background:'var(--paper)',boxShadow:'3px 3px 0 var(--ink)'}}>
+        {clientMenuOpen&&<div className="row-actions" style={{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:1000,display:'grid',minWidth:190,padding:8,border:'2px solid var(--ink)',borderRadius:14,background:'var(--paper)',boxShadow:'3px 3px 0 var(--ink)'}}>
           <button className="text-button" type="button" onClick={()=>{setEditing(true);changeTab('overview');setClientMenuOpen(false);}}>Edit profile</button>
           <button className="text-button" type="button" onClick={()=>{resendLogin();setClientMenuOpen(false);}} disabled={!profile.email}>Resend login</button>
           <button className="text-button" type="button" onClick={archiveThisClient} disabled={lifecycleBusy}>Archive client</button>

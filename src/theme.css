@@ -1,0 +1,323 @@
+html:root {
+  --ink: #4A2E3B;
+  --muted: #7A5A68;
+  --line: #4A2E3B;
+  --teal: #A8476F;
+  --teal-dark: #843653;
+  --butter: #F9C9A8;
+  --blush: #F4B6C2;
+  --coral: #A8476F;
+  --mint: #BFDCC9;
+  --cream: #FDF4F1;
+  --paper: #FFFDF7;
+  --input: #FFFFFF;
+  --lavender: #CDB8E8;
+  --rose: #F28FA5;
+  --soft-grey: #E8E1E3;
+  --dot: #F3DCD6;
+  --shadow: 4px 4px 0 var(--ink);
+  color: var(--ink);
+  background: var(--cream);
+}
+
+html body {
+  color: var(--ink);
+  background-color: var(--cream);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+}
+
+html body input:not([type='checkbox']):not([type='radio']),
+html body select,
+html body textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+  background-color: var(--input);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+html body input[type='checkbox'],
+html body input[type='radio'] {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+html body label,
+html body form,
+html body form > * {
+  min-width: 0;
+}
+
+html body .form-grid,
+html body .weekly-time-fields,
+html body .weekly-date-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+html body .weekly-time-fields label,
+html body .weekly-date-fields label {
+  min-width: 0;
+  white-space: normal;
+}
+
+html body .slot-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+html body .slot-form > div,
+html body .slot-form > button {
+  grid-column: 1 / -1;
+}
+
+html body .slot-form label {
+  width: auto;
+  min-width: 0;
+}
+
+html body .day-time-row {
+  grid-template-columns: minmax(0, .6fr) repeat(2, minmax(0, 1fr));
+}
+
+html body .day-time-row label {
+  min-width: 0;
+}
+
+html body .panel,
+html body .client-card,
+html body .stat-card,
+html body .login-card,
+html body .payment-editor,
+html body .upcoming-session-card,
+html body .client-payment-package,
+html body .sidebar {
+  background-color: var(--paper);
+}
+
+html body .stat-card:nth-child(3n),
+html body .payment-sticker:nth-child(3n) {
+  background-color: var(--lavender);
+}
+
+html body .panel-title h2,
+html body .today-pill,
+html body .count-pill,
+html body .client-badges span,
+html body .client-session-week > h3,
+html body .client-session-date-block,
+html body .client-exercise-list > div,
+html body .private-note,
+html body .client-note,
+html body .schedule-card {
+  background-color: var(--butter);
+  color: var(--ink);
+}
+
+html body .panel-title h2,
+html body .client-session-week > h3,
+html body .upcoming-week-heading h3 {
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+}
+
+html body .panel:nth-of-type(3n + 2) .panel-title h2,
+html body .client-session-week:nth-child(3n + 2) > h3,
+html body .upcoming-week:nth-child(3n + 2) .upcoming-week-heading h3 {
+  background-color: var(--blush);
+}
+
+html body .panel:nth-of-type(3n) .panel-title h2,
+html body .client-session-week:nth-child(3n) > h3,
+html body .upcoming-week:nth-child(3n) .upcoming-week-heading h3 {
+  background-color: var(--lavender);
+}
+
+html body .button-primary,
+html body .nav-item.active,
+html body .mobile-nav button.active,
+html body .client-tabs button.selected,
+html body .calendar-view-toggle button.selected {
+  background-color: var(--teal);
+  color: #FFFFFF;
+}
+
+html body .button-primary:hover {
+  background-color: var(--teal-dark);
+  color: #FFFFFF;
+}
+
+html body .progress-track span,
+html body .client-stat-progress span {
+  background-color: var(--teal);
+}
+
+html body .status.status-requested,
+html body .confirmation-pending,
+html body .upcoming-status.waiting {
+  border-color: var(--ink);
+  background-color: var(--input);
+  color: var(--ink);
+}
+
+html body .status.status-requested {
+  background-color: var(--butter);
+}
+
+html body .status.status-confirmed,
+html body .client-confirmed-label,
+html body .session-confirmed-badge,
+html body .upcoming-status.confirmed {
+  background-color: var(--mint);
+  color: var(--ink);
+}
+
+html body .status.status-completed {
+  background-color: var(--lavender);
+  color: var(--ink);
+}
+
+html body .status.status-cancelled {
+  background-color: var(--blush);
+  color: var(--ink);
+}
+
+html body .status.status-noshow,
+html body .client-status-sticker.archived,
+html body .billing-not-due {
+  background-color: var(--soft-grey);
+  color: var(--ink);
+}
+
+html body .billing-overdue {
+  background-color: var(--rose);
+  color: var(--ink);
+}
+
+html body .client-status-sticker.next-confirmed {
+  background-color: var(--mint);
+  color: var(--ink);
+}
+
+html body .calendar-view-toggle {
+  background-color: var(--butter);
+}
+
+html body .calendar-day {
+  background-color: var(--paper);
+}
+
+html body .dot-requested {
+  background-color: var(--butter) !important;
+}
+
+html body .dot-confirmed {
+  background-color: var(--mint) !important;
+}
+
+html body .dot-completed {
+  background-color: var(--lavender) !important;
+}
+
+html body .dot-cancelled {
+  background-color: var(--blush) !important;
+}
+
+html body .dot-noshow {
+  background-color: var(--soft-grey) !important;
+}
+
+html body .client-quick-stat.butter {
+  background-color: var(--butter);
+}
+
+html body .client-quick-stat.blush {
+  background-color: var(--blush);
+}
+
+html body .client-quick-stat.mint {
+  background-color: var(--mint);
+}
+
+html body .client-quick-stat.coral {
+  background-color: var(--lavender);
+}
+
+html body .avatar-large,
+html body .client-hero-avatar {
+  background-color: var(--blush);
+  color: var(--ink);
+}
+
+html body .client-card:nth-child(4n + 1) .avatar-large {
+  background-color: var(--blush);
+}
+
+html body .client-card:nth-child(4n + 2) .avatar-large {
+  background-color: var(--lavender);
+}
+
+html body .client-card:nth-child(4n + 3) .avatar-large {
+  background-color: var(--butter);
+}
+
+html body .client-card:nth-child(4n) .avatar-large {
+  background-color: var(--mint);
+}
+
+html body .mobile-topbar {
+  background-color: rgb(253 244 241 / 93%);
+}
+
+html body .page-heading::after,
+html body .status-completed::after,
+html body .status-completed::before,
+html body .session-confetti {
+  color: var(--blush);
+}
+
+html body .client-detail .panel-wide:has(> .panel) {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html body .slot-form > label,
+html body .weekly-date-fields label,
+html body .weekly-time-fields label {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  html body .form-grid,
+  html body .weekly-time-fields,
+  html body .weekly-date-fields,
+  html body .slot-form,
+  html body .day-time-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html body .slot-form > div,
+  html body .slot-form > button {
+    grid-column: auto;
+  }
+
+  html body .day-time-row strong {
+    grid-column: auto;
+    padding-bottom: 0;
+  }
+
+  html body .slot-form > button {
+    width: 100%;
+  }
+}

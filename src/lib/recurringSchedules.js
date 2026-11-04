@@ -103,6 +103,7 @@ async function fillScheduleRecords(schedule,fromDate) {
       && weekdayForDate(session.expand?.slot?.date)!==targetDay)
     .sort((first,second)=>dateKey(first.expand?.slot?.date).localeCompare(dateKey(second.expand?.slot?.date)));
   const packageId=packages[0]?.id || '';
+  let added=0;
 
   for (const session of candidates) {
     const targetDate=dates.find((date)=>!occupiedDates.has(date));
@@ -115,11 +116,16 @@ async function fillScheduleRecords(schedule,fromDate) {
       status: 'booked'
     });
     try {
-      await pb.collection('sessions').update(session.id,{slot:newSlot.id});
+      await pb.collection('sessions').update(session.id,{
+        slot:newSlot.id,
+        schedule:normalized.id,
+        ...(packageId?{package:packageId}:{})
+      });
       if (session.slot) {
         await pb.collection('availability').update(session.slot,{status:'open'}).catch(()=>{});
       }
       occupiedDates.add(targetDate);
+      added+=1;
     } catch (error) {
       await pb.collection('availability').delete(newSlot.id).catch(()=>{});
       throw error;
@@ -147,16 +153,19 @@ async function fillScheduleRecords(schedule,fromDate) {
         reminder_sent: false
       });
       occupiedDates.add(date);
+      added+=1;
     } catch (error) {
       await pb.collection('availability').delete(slot.id).catch(()=> {});
       throw error;
     }
   }
+  return added;
 }
 
 export async function fillAllActiveSchedules() {
   const schedules=await pb.collection('recurring_schedules').getFullList({filter: 'active=true'});
-  await Promise.all(schedules.map((schedule)=> fillSchedule(schedule)));
+  const counts=await Promise.all(schedules.map((schedule)=>fillSchedule(schedule)));
+  return counts.reduce((sum,count)=>sum+Number(count||0),0);
 }
 
 export async function changeSchedule(schedule,changes,effectiveDate) {
@@ -197,8 +206,8 @@ export async function changeSchedule(schedule,changes,effectiveDate) {
     }
   }
 
-  await fillSchedule(updated,effectiveDate);
-  return updated;
+  const added=await fillSchedule(updated,effectiveDate);
+  return {...updated,addedSessions:added};
 }
 
 export async function removeFutureScheduleSessions(scheduleId,fromDate) {
@@ -219,7 +228,7 @@ function normalizeTime(value) {
 }
 
 function pocketBaseDate(value) {
-  return new Date(`${dateKey(value)}T00:00:00.000Z`).toISOString();
+  return new Date(`${dateKey(value)}T12:00:00`).toISOString();
 }
 
 export {weekdays};
