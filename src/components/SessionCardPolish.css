@@ -1,0 +1,57 @@
+.status {
+  padding: 4px 9px;
+  border: 2px solid var(--ink);
+  border-radius: 15px;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1.2;
+  transform: rotate(-1deg);
+}
+
+.status-requested {
+  background: #FBC768;
+  color: #38251A;
+}
+
+.status-confirmed {
+  background: #A8D8C0;
+  color: #38251A;
+}
+
+.status-completed {
+  background: #2F5566;
+  color: #FCF4E6;
+}
+
+.status-cancelled {
+  background: #F2A0AC;
+  color: #38251A;
+}
+
+.status-noshow {
+  background: #E5E1DA;
+  color: #38251A;
+}
+
+.schedule-card.available {
+  padding: 42px 10px 10px;
+}
+
+.schedule-card.available > b {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.schedule-card.available .slot-delete {
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 2px 2px 0 var(--ink);
+}

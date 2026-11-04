@@ -1,0 +1,566 @@
+[
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "listRule": "@request.auth.role = \"trainer\"",
+    "viewRule": "@request.auth.role = \"trainer\" || id = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\" && @request.body.role = \"client\"",
+    "updateRule": "@request.auth.role = \"trainer\" && @request.body.role:changed = false",
+    "deleteRule": "@request.auth.role = \"trainer\" && role = \"client\"",
+    "options": {
+      "allowEmailAuth": true,
+      "allowOAuth2Auth": false,
+      "allowUsernameAuth": false,
+      " exceptEmailDomains": null,
+      "manageRule": "@request.auth.role = \"trainer\""
+    },
+    "fields": [
+      {
+        "id": "role_field_00001",
+        "name": "role",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["trainer", "client"]
+        }
+      },
+      {
+        "id": "name_field_00001",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 120,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_clients_00001",
+    "name": "clients",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\" || user = @request.auth.id",
+    "viewRule": "@request.auth.role = \"trainer\" || user = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_client_user_0001",
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "_pb_users_auth_",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_client_name_00001",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 120,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_client_email_0001",
+        "name": "email",
+        "type": "email",
+        "required": true,
+        "options": {
+          "exceptDomains": null,
+          "onlyDomains": null
+        }
+      },
+      {
+        "id": "f_client_phone_0001",
+        "name": "phone",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 40,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_client_goals_00001",
+        "name": "goals",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 4000,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_client_health_0001",
+        "name": "health_notes",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 4000,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_client_active_0001",
+        "name": "active",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_private_000001",
+    "name": "trainer_private_notes",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\"",
+    "viewRule": "@request.auth.role = \"trainer\"",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_private_client_0001",
+        "name": "client",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_clients_00001",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_private_notes_00001",
+        "name": "notes",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 8000,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_packages_0001",
+    "name": "packages",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "viewRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_package_client_001",
+        "name": "client",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_clients_00001",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_package_name_00001",
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 120,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_package_total_0001",
+        "name": "total_sessions",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 10000,
+          "noDecimal": true
+        }
+      },
+      {
+        "id": "f_package_price_0001",
+        "name": "price",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0,
+          "max": 1000000,
+          "noDecimal": false
+        }
+      },
+      {
+        "id": "f_package_start_0001",
+        "name": "start_date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "f_package_expiry_001",
+        "name": "expiry_date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "id": "f_package_status_001",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["active", "completed", "expired"]
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_availability_01",
+    "name": "availability",
+    "type": "base",
+    "listRule": "@request.auth.id != \"\"",
+    "viewRule": "@request.auth.id != \"\"",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_avail_date_00001",
+        "name": "date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "f_avail_start_0001",
+        "name": "start",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 10,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_avail_end_00001",
+        "name": "end",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 10,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_avail_status_0001",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["open", "booked"]
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_sessions_00001",
+    "name": "sessions",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "viewRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\" || (@request.auth.role = \"client\" && client.user = @request.auth.id && status = \"requested\")",
+    "updateRule": "@request.auth.role = \"trainer\" || (client.user = @request.auth.id && (@request.body.status = \"cancelled\" || @request.body.status:changed = false) && @request.body.client:changed = false && @request.body.package:changed = false && @request.body.trainer_notes:changed = false && @request.body.reminder_sent:changed = false)",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_session_client_0001",
+        "name": "client",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_clients_00001",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_session_package_001",
+        "name": "package",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "pbc_packages_0001",
+          "cascadeDelete": false,
+          "minSelect": 0,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_session_slot_000001",
+        "name": "slot",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_availability_01",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_session_status_0001",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["requested", "confirmed", "completed", "cancelled", "no-show"]
+        }
+      },
+      {
+        "id": "f_session_trainer_001",
+        "name": "trainer_notes",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 8000,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_session_clientnotes_01",
+        "name": "client_notes",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 4000,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_session_reminder_01",
+        "name": "reminder_sent",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_workouts_0001",
+    "name": "workouts",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "viewRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\" || (client.user = @request.auth.id && logged_by = \"client\")",
+    "updateRule": "@request.auth.role = \"trainer\" || (client.user = @request.auth.id && logged_by = \"client\" && @request.body.client:changed = false && @request.body.logged_by:changed = false)",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_workout_client_0001",
+        "name": "client",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_clients_00001",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_workout_session_001",
+        "name": "session",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "pbc_sessions_00001",
+          "cascadeDelete": false,
+          "minSelect": 0,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_workout_date_00001",
+        "name": "date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "f_workout_exercises_01",
+        "name": "exercises",
+        "type": "json",
+        "required": false,
+        "options": {
+          "maxSize": 200000
+        }
+      },
+      {
+        "id": "f_workout_notes_0001",
+        "name": "notes",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 8000,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_workout_loggedby_001",
+        "name": "logged_by",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["trainer", "client"]
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_payments_0001",
+    "name": "payments",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "viewRule": "@request.auth.role = \"trainer\" || client.user = @request.auth.id",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_payment_client_0001",
+        "name": "client",
+        "type": "relation",
+        "required": true,
+        "options": {
+          "collectionId": "pbc_clients_00001",
+          "cascadeDelete": false,
+          "minSelect": 1,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_payment_package_001",
+        "name": "package",
+        "type": "relation",
+        "required": false,
+        "options": {
+          "collectionId": "pbc_packages_0001",
+          "cascadeDelete": false,
+          "minSelect": 0,
+          "maxSelect": 1
+        }
+      },
+      {
+        "id": "f_payment_amount_0001",
+        "name": "amount",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0,
+          "max": 1000000,
+          "noDecimal": false
+        }
+      },
+      {
+        "id": "f_payment_date_00001",
+        "name": "date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "id": "f_payment_method_001",
+        "name": "method",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": ["cash", "Venmo", "Zelle", "card", "other"]
+        }
+      },
+      {
+        "id": "f_payment_note_00001",
+        "name": "note",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 2000,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "pbc_settings_00001",
+    "name": "settings",
+    "type": "base",
+    "listRule": "@request.auth.role = \"trainer\"",
+    "viewRule": "@request.auth.role = \"trainer\"",
+    "createRule": "@request.auth.role = \"trainer\"",
+    "updateRule": "@request.auth.role = \"trainer\"",
+    "deleteRule": "@request.auth.role = \"trainer\"",
+    "fields": [
+      {
+        "id": "f_setting_key_00001",
+        "name": "key",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 100,
+          "pattern": ""
+        }
+      },
+      {
+        "id": "f_setting_template_01",
+        "name": "reminder_template",
+        "type": "text",
+        "required": false,
+        "options": {
+          "min": 0,
+          "max": 2000,
+          "pattern": ""
+        }
+      }
+    ],
+    "indexes": ["CREATE UNIQUE INDEX `idx_settings_key` ON `settings` (`key`)"]
+  }
+]
