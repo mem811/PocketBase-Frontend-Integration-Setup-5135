@@ -37,6 +37,17 @@ function toMinutes(value='') {
   return (hours || 0)*60+(minutes || 0);
 }
 
+function scheduleWeekday(value) {
+  const normalized=String(value ?? '').trim().toLowerCase();
+  if (/^[0-6]$/.test(normalized)) return Number(normalized);
+  return weekdayNumbers[weekdays.indexOf(normalized)];
+}
+
+function weekdayForDate(value) {
+  const [year,month,day]=dateKey(value).split('-').map(Number);
+  return new Date(year,month-1,day,12).getDay();
+}
+
 function occurrenceDates(schedule,fromDate) {
   const today=localDateKey();
   const start=[today,dateKey(fromDate),dateKey(schedule.start_date)]
@@ -47,8 +58,9 @@ function occurrenceDates(schedule,fromDate) {
   const horizonEnd=new Date(horizonStart);
   horizonEnd.setDate(horizonEnd.getDate()+28);
   const limit=dateKey(schedule.end_date);
-  const end=limit && limit<localDateKey(horizonEnd) ? limit : localDateKey(horizonEnd);
-  const targetDay=weekdayNumbers[weekdays.indexOf(String(schedule.weekday || '').toLowerCase())];
+  const horizonEndKey=localDateKey(horizonEnd);
+  const end=limit && limit<horizonEndKey ? limit : horizonEndKey;
+  const targetDay=scheduleWeekday(schedule.weekday);
   const dates=[];
 
   for (let cursor=new Date(`${start}T12:00:00`);localDateKey(cursor)<=end;cursor.setDate(cursor.getDate()+1)) {
@@ -80,9 +92,39 @@ async function fillScheduleRecords(schedule,fromDate) {
     sessionsForSchedule(schedule.id),
     pb.collection('packages').getFullList({filter: `client="${schedule.client}" && status="active"`})
   ]);
-  const occupiedDates=new Set(sessions.map((session)=> dateKey(session.expand?.slot?.date)));
-  const packageId=packages[0]?.id || '';
   const dates=occurrenceDates(normalized,fromDate);
+  const today=localDateKey();
+  const targetDay=scheduleWeekday(normalized.weekday);
+  const occupiedDates=new Set(sessions.map((session)=> dateKey(session.expand?.slot?.date)));
+  const candidates=sessions
+    .filter((session)=>session.status==='confirmed'
+      && !session.moved
+      && dateKey(session.expand?.slot?.date)>=today
+      && weekdayForDate(session.expand?.slot?.date)!==targetDay)
+    .sort((first,second)=>dateKey(first.expand?.slot?.date).localeCompare(dateKey(second.expand?.slot?.date)));
+  const packageId=packages[0]?.id || '';
+
+  for (const session of candidates) {
+    const targetDate=dates.find((date)=>!occupiedDates.has(date));
+    if (!targetDate) break;
+
+    const newSlot=await pb.collection('availability').create({
+      date: pocketBaseDate(targetDate),
+      start: normalized.start,
+      end: normalized.end,
+      status: 'booked'
+    });
+    try {
+      await pb.collection('sessions').update(session.id,{slot:newSlot.id});
+      if (session.slot) {
+        await pb.collection('availability').update(session.slot,{status:'open'}).catch(()=>{});
+      }
+      occupiedDates.add(targetDate);
+    } catch (error) {
+      await pb.collection('availability').delete(newSlot.id).catch(()=>{});
+      throw error;
+    }
+  }
 
   for (const date of dates) {
     if (occupiedDates.has(date)) continue;

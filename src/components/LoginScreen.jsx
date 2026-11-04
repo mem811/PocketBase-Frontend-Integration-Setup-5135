@@ -8,6 +8,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
 
   async function signIn(event) {
     event.preventDefault();
@@ -22,19 +26,109 @@ export default function LoginScreen() {
     }
   }
 
+  function showPasswordReset() {
+    setResetEmail(email);
+    setResetSent(false);
+    setResetMode(true);
+  }
+
+  async function sendResetLink(event) {
+    event.preventDefault();
+    setResetBusy(true);
+    try {
+      await pb.collection('users').requestPasswordReset(resetEmail);
+    } catch {
+      // Keep the response identical whether or not the email has an account.
+    } finally {
+      setResetSent(true);
+      setResetBusy(false);
+    }
+  }
+
+  function backToSignIn() {
+    setResetMode(false);
+    setResetSent(false);
+  }
+
   return (
     <main className="login-wrap">
       <section className="login-card">
         <div className="brand-mark"><SafeIcon icon={FiIcons.FiActivity} /></div>
         <p className="eyebrow">YOUR TRAINING STUDIO</p>
-        <h1>Welcome back.</h1>
-        <p className="muted">Your sessions, progress, and plans—all in one place.</p>
-        <form onSubmit={signIn} className="stack-form">
-          <label>Email address<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-          <label>Password<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
-          {error && <p className="error-text">{error}</p>}
-          <button className="button button-primary button-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <SafeIcon icon={FiIcons.FiArrowRight} /></button>
-        </form>
+        <h1>{resetMode ? 'Reset your password.' : 'Welcome back.'}</h1>
+        <p className="muted">
+          {resetMode
+            ? 'We’ll send a reset link if there’s an account for that email.'
+            : 'Your sessions, progress, and plans—all in one place.'}
+        </p>
+        {resetMode ? (
+          <>
+            {resetSent ? (
+              <div className="notice" role="status" aria-live="polite">
+                If that email has an account, a reset link is on its way. Check your inbox (and spam).
+              </div>
+            ) : (
+              <form onSubmit={sendResetLink} className="stack-form">
+                <label>
+                  Email address
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={resetEmail}
+                    onChange={(event) => setResetEmail(event.target.value)}
+                  />
+                </label>
+                <button className="button button-primary button-full" disabled={resetBusy}>
+                  {resetBusy ? 'Sending…' : 'Send reset link'}
+                </button>
+              </form>
+            )}
+            <button
+              type="button"
+              className="text-button"
+              onClick={backToSignIn}
+              style={{ minHeight: 48, marginTop: 10, padding: '8px 12px' }}
+            >
+              Back to sign in
+            </button>
+          </>
+        ) : (
+          <form onSubmit={signIn} className="stack-form">
+            <label>
+              Email address
+              <input
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="text-button"
+              onClick={showPasswordReset}
+              style={{ minHeight: 44, justifySelf: 'start', padding: '6px 8px' }}
+            >
+              Forgot password?
+            </button>
+            {error && <p className="error-text">{error}</p>}
+            <button className="button button-primary button-full" disabled={busy}>
+              {busy ? 'Signing in…' : 'Sign in'} <SafeIcon icon={FiIcons.FiArrowRight} />
+            </button>
+          </form>
+        )}
         <p className="login-foot">Client access is provided by your trainer. No public sign-up.</p>
       </section>
     </main>

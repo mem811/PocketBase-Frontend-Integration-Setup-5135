@@ -1,0 +1,71 @@
+.exercise-progress {
+  min-width: 0;
+  margin-top: 17px;
+}
+
+.progress-chart-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 560px;
+  margin-bottom: 12px;
+}
+
+.progress-chart-controls label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.progress-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.progress-chart {
+  display: block;
+  width: 100%;
+  min-width: 480px;
+  overflow: visible;
+}
+
+.chart-axis {
+  stroke: #d9c9af;
+  stroke-width: 2;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--teal);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.chart-dot {
+  fill: var(--butter);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.chart-value {
+  fill: var(--ink);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.chart-date {
+  fill: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .progress-chart-controls {
+    grid-template-columns: 1fr;
+  }
+}

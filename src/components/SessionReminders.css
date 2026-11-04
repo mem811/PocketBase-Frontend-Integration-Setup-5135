@@ -1,0 +1,42 @@
+.session-reminders {
+  min-width: 0;
+  margin: 18px 0;
+}
+
+.reminder-note {
+  margin: -4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reminder-message {
+  margin: 0 0 12px;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.reminder-scheduled {
+  color: var(--teal) !important;
+  font-weight: 800;
+}
+
+.session-reminders .list-row {
+  gap: 12px;
+}
+
+.session-reminders .button {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 520px) {
+  .session-reminders .list-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .session-reminders .button {
+    width: 100%;
+  }
+}
