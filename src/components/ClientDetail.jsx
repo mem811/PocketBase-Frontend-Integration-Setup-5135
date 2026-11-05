@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {pb,money,formatDate,formatTime} from '../lib/pocketbase';
-import {pocketBaseErrorMessage} from '../lib/pocketbaseErrors';
+import {pocketBaseErrorMessage} from '../lib/pocketBaseErrors';
 import {archiveClient,permanentlyDeleteClient} from '../lib/clientLifecycle';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -11,6 +12,7 @@ import ClientProfileEditor from './ClientProfileEditor';
 import PackageBillingSummary from './PackageBillingSummary';
 import ExerciseProgressChart from './ExerciseProgressChart';
 import PaymentEditor from './PaymentEditor';
+import './ClientDetailModal.css';
 
 const today=()=>localDateKey(new Date());
 function dateValue(value){return value?new Date(`${value}T12:00:00.000Z`).toISOString():'';}
@@ -112,6 +114,18 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       document.removeEventListener('keydown',closeOnEscape);
     };
   },[clientMenuOpen]);
+
+  const anyModalOpen=showDeleteDialog||showArchiveDialog||Boolean(noteToDelete)||scheduleOpen||paymentOpen;
+  useEffect(()=>{
+    if(!anyModalOpen)return undefined;
+    const previousOverflow=document.body.style.overflow;
+    document.body.classList.add('studio-modal-open');
+    document.body.style.overflow='hidden';
+    return ()=>{
+      document.body.classList.remove('studio-modal-open');
+      document.body.style.overflow=previousOverflow;
+    };
+  },[anyModalOpen]);
 
   function changeTab(next){
     setTab(next);
@@ -328,7 +342,7 @@ export default function ClientDetail({client,onBack,onRemoved}) {
       <div className="stat-card"><span className="stat-icon"><SafeIcon icon={FiIcons.FiClock}/></span><p>Weekly times</p><strong style={{fontSize:18}}>{weeklyLabel.split(' · ')[0]}</strong><span>{weeklyLabel.includes(' · ')?weeklyLabel.split(' · ')[1]:'Add a weekly schedule'}</span></div>
     </section>
 
-    <div className="heading-actions" style={{position:'relative',zIndex:1001,justifyContent:'flex-start',flexWrap:'wrap',overflow:'visible',padding:'3px 4px 9px'}}>
+    <div className="heading-actions client-action-bar" style={{justifyContent:'flex-start',flexWrap:'wrap',overflow:'visible',padding:'3px 4px 9px'}}>
       <button className="button button-secondary" onClick={()=>openPackageForm()}><SafeIcon icon={FiIcons.FiPlus}/> Add package</button>
       <button className="button button-primary" onClick={recordPayment}><SafeIcon icon={FiIcons.FiDollarSign}/> Record payment</button>
       <button className="button button-soft" onClick={openScheduleSession}><SafeIcon icon={FiIcons.FiCalendar}/> Schedule session</button>
@@ -502,10 +516,13 @@ function PanelTitle({title}){return <div className="panel-title"><div><h2>{title
 function Empty({text}){return <div className="empty-state"><p>{text}</p></div>;}
 
 function StudioModal({title,children,onClose,closeDisabled=false}){
-  return <div role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!closeDisabled)onClose();}} style={{position:'fixed',inset:0,zIndex:2000,display:'grid',placeItems:'center',padding:16,background:'rgba(35,24,29,.52)'}}>
-    <section className="panel form-panel" role="dialog" aria-modal="true" aria-label={title} style={{width:'min(100%,560px)',maxHeight:'90vh',overflowY:'auto'}}>
-      <div className="panel-title"><div><h2>{title}</h2></div><button type="button" className="icon-button" onClick={onClose} disabled={closeDisabled} aria-label="Close">×</button></div>
-      {children}
-    </section>
-  </div>;
+  return createPortal(
+    <div className="studio-modal-backdrop" role="presentation" onMouseDown={(event)=>{if(event.target===event.currentTarget&&!closeDisabled)onClose();}}>
+      <section className="panel form-panel studio-modal-card" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="panel-title"><div><h2>{title}</h2></div><button type="button" className="icon-button" onClick={onClose} disabled={closeDisabled} aria-label="Close">×</button></div>
+        {children}
+      </section>
+    </div>,
+    document.body
+  );
 }
